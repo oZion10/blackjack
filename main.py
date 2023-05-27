@@ -28,6 +28,8 @@ def find_pair(mylist):
 class Player():
     def __init__(self):
         self.cards = []
+        self.cards_split = []
+        self.split_mode = False
         self.money = 0
         self.bet = 0
     
@@ -53,30 +55,42 @@ class Player():
 
     def decide(self):
         while True:
-            self.decision = input("Would you like to [H]it, [S]tand, [D]ouble down, s[P]lit or s[U]rrender? ")
+            self.decision = input("Would you like to [H]it, [S]tand, [D]ouble down or s[P]lit? ").lower()
+            if self.split_mode:
+                while True:
+                    try:
+                        print("Hand 1:", self.cards*)
+                        self.hand = int(input("or hand 1:", self.cards_split* + "? "))
+                        if self.hand in range(1, 3):
+                            break
+                        else:
+                            print("Incorrect hand!")
+                    except ValueError:
+                        print("Incorrect hand!")
             if self.decision == "h":
-                self.hit()
+                self.hit(self.hand)
                 break
             
             elif self.decision == "s":
-                self.stand()
+                self.stand(self.hand)
                 break
             
             elif self.decision == "d":
                 if self.money - self.bet*2 > 0:
-                    self.double()
+                    self.double(self.hand)
                     break
                 else:
                     print("You don't have enough money to double!")
 
             elif self.decision == "p":
-                self.split()
-                break
-            
-            elif self.decision == "u":
-                self.surrender()
-                break
-
+                if get_points(self.cards[0]) == get_points(self.cards[1]):
+                    if self.money - self.bet*2 > 0:
+                        self.split(self.hand)
+                        break
+                    else:
+                        print("You don't have enough money to split!")
+                else:
+                    print("You can only split when your cards are of the same value!")
 
             else:
                 print(f"Invalid choice, try again!")
@@ -85,7 +99,6 @@ class Player():
         self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
         print(f"Card obtained: {self.cards[-1]}")
         print("Your cards:", *player.cards, f"| Points: {get_points(player.cards)} | Dealer: {dealer.cards[0]} ??\n")
-
 
     def stand(self):
         print(f"You: stand!")
@@ -96,12 +109,13 @@ class Player():
         print(f"You: double down!")
 
     def split(self): # TODO
+        self.bet *= 2
+        self.split_mode = True
+        self.cards_split.append(self.cards.pop[1])
+        self.cards_split.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
+        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
         print(f"You: split!")
         pass
-
-    def surrender(self):
-        print(f"You: surrender!")
-        del bots[self.num]
 
     def state(self):
         if get_points(self.cards) > 21:
@@ -142,9 +156,9 @@ class Bot():
         self.strategy = { # https://www.cs.mcgill.ca/~rwest/wikispeedia/wpcd/wp/b/Blackjack.htm
             "hard_totals":[
                 ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"], #            0
-                ["S", "S", "S", "S", "S", "S", "S", "S", "S", "Rs"], #           1
-                ["S", "S", "S", "S", "S", "H", "H", "Rh", "Rh", "Rh"], #         2
-                ["S", "S", "S", "S", "S", "H", "H", "H", "Rh", "Rh"], #          3
+                ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"], #            1
+                ["S", "S", "S", "S", "S", "H", "H", "H", "H", "H"], #            2
+                ["S", "S", "S", "S", "S", "H", "H", "H", "H", "H"], #            3
                 ["S", "S", "S", "S", "S", "H", "H", "H", "H", "H"], #            4
                 ["H", "H", "S", "S", "S", "H", "H", "H", "H", "H"], #            5
                 ["D", "D", "D", "D", "D", "D", "D", "D", "D", "H"], #            6
@@ -164,7 +178,7 @@ class Bot():
                 ["SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP"], #  0
                 ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"], #            1
                 ["SP", "SP", "SP", "SP", "SP", "S", "SP", "SP", "S", "S"], #     2
-                ["SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "Rsp"], # 3
+                ["SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP", "SP"], #  3
                 ["SP", "SP", "SP", "SP", "SP", "SP", "H", "H", "H", "H"], #      4
                 ["SP", "SP", "SP", "SP", "SP", "H", "H", "H", "H", "H"], #       5
                 ["D", "D", "D", "D", "D", "D", "D", "D", "H", "H"], #            6
@@ -230,17 +244,6 @@ class Bot():
             self.double()
         elif self.choice == "SP":
             self.split()
-        elif self.choice == "Rh": # TODO
-            pass
-        elif self.choice == "Rs": # TODO
-            pass
-        elif self.choice == "Rsp": # TODO
-            pass
-
-
-
-
-
 
     def hit(self):
         self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
@@ -254,13 +257,9 @@ class Bot():
         self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
         print(f"bot {self.num}(${self.bet}): double down!")
 
-    def split(self):
+    def split(self): # TODO
         print(f"bot {self.num}: split!")
         pass
-
-    def surrender(self):
-        print(f"bot {self.num}: surrender!")
-        del bots[self.num]
     
     def state(self):
         if get_points(self.cards) > 21:

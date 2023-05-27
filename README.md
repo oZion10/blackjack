@@ -4,9 +4,6 @@ https://www.cs.mcgill.ca/~rwest/wikispeedia/wpcd/wp/b/Blackjack.htm
 
 TODO
 * insurance
-* Hit: Take another card.
-* Stand: Take no more cards.
-* Double down: Double the wager, take exactly one more card, and then stand.
 * Split: Double the wager and have each card be the first card in a new hand. This option is available only when both cards have the same value. Sometimes two face cards will be considered acceptable for splitting, as each is 10 points.
 * Surrender: Forfeit half the bet and give up the hand. Surrender was common during the early- and mid-20th century, but is no longer offered at most casinos.
 
