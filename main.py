@@ -32,128 +32,9 @@ class Player():
         self.split_mode = False
         self.money = 0
         self.bet = 0
-    
-    def place_bet(self):
-        while True:
-            try:
-                self.money = int(input("How much money do you have? $"))
-                if self.money <= 4: print("You don't have enough money to play!")
-                else: break
-            except:
-                print("Incorrect money amount!")
-        
-        while True:
-            try:
-                self.bet = int(input("Place bet (MIN:$5): $"))
-                if self.bet <= 4: print("Incorrect betting amount!")
-                elif self.money < self.bet: print("You don't have that much money available to bet!")
-                else: break
-            except:
-                print("Incorrect betting amount!")
-        
-        self.money -= self.bet
-
-    def decide(self):
-        while True:
-            self.decision = input("Would you like to [H]it, [S]tand, [D]ouble down or s[P]lit? ").lower()
-            if self.split_mode:
-                while True:
-                    try:
-                        print("Hand 1:", self.cards*)
-                        self.hand = int(input("or hand 1:", self.cards_split* + "? "))
-                        if self.hand in range(1, 3):
-                            break
-                        else:
-                            print("Incorrect hand!")
-                    except ValueError:
-                        print("Incorrect hand!")
-            if self.decision == "h":
-                self.hit(self.hand)
-                break
-            
-            elif self.decision == "s":
-                self.stand(self.hand)
-                break
-            
-            elif self.decision == "d":
-                if self.money - self.bet*2 > 0:
-                    self.double(self.hand)
-                    break
-                else:
-                    print("You don't have enough money to double!")
-
-            elif self.decision == "p":
-                if get_points(self.cards[0]) == get_points(self.cards[1]):
-                    if self.money - self.bet*2 > 0:
-                        self.split(self.hand)
-                        break
-                    else:
-                        print("You don't have enough money to split!")
-                else:
-                    print("You can only split when your cards are of the same value!")
-
-            else:
-                print(f"Invalid choice, try again!")
-        
-    def hit(self):
-        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        print(f"Card obtained: {self.cards[-1]}")
-        print("Your cards:", *player.cards, f"| Points: {get_points(player.cards)} | Dealer: {dealer.cards[0]} ??\n")
-
-    def stand(self):
-        print(f"You: stand!")
-
-    def double(self):
-        self.bet *= 2
-        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        print(f"You: double down!")
-
-    def split(self): # TODO
-        self.bet *= 2
-        self.split_mode = True
-        self.cards_split.append(self.cards.pop[1])
-        self.cards_split.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        print(f"You: split!")
-        pass
-
-    def state(self):
-        if get_points(self.cards) > 21:
-            print("*** You busted! ***")
-            print(f"Balance  : ${self.money}")
-            print(f"You lost : ${self.bet}")
-            gameover()
-
-        elif get_points(self.cards) == 21 and get_points(dealer.cards) != 21: # Blackjack for player
-            print("*** You got blackjack! ***")
-            self.money += self.bet*1.5
-            print(f"Reward : ${round(self.bet*1.5, 2)}")
-            print(f"Balance  : ${self.money}")
-            gameover()
-
-        elif get_points(dealer.cards) == 21 and get_points(self.cards) != 21: # Blackjack for dealer
-            print("*** The dealer has blackjack! ***")
-            print(f"You lost : ${self.bet}")
-            print(f"Balance  : ${self.money}")
-            gameover()
-        
-        elif get_points(dealer.cards) == get_points(self.cards) and get_points(self.cards) in range(17, 22): # Push
-            print("*** Push! (dealer and you) ***")
-            print(f"Balance  : ${self.money}")
-            gameover()
-        
-        else:
-            for bot in bots:
-                if get_points(bot.cards) == get_points(self.cards) and get_points(bot.cards) == 21:
-                    print(f"*** Push! (You and bot {bot.num})***")
-
-
-class Bot():
-    def __init__(self, bet, num):
-        self.cards = []
-        self.bet = bet
-        self.num = num
-        self.strategy = { # https://www.cs.mcgill.ca/~rwest/wikispeedia/wpcd/wp/b/Blackjack.htm
+        self.hand = 0
+        self.hands = [self.cards, self.cards_split]
+        self.strategy_table = { # https://www.cs.mcgill.ca/~rwest/wikispeedia/wpcd/wp/b/Blackjack.htm
             "hard_totals":[
                 ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"], #            0
                 ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"], #            1
@@ -218,87 +99,141 @@ class Bot():
             ]
         }
         self.choice = ""
+    
+    def place_bet(self):
+        while True:
+            try:
+                self.money = int(input("How much money do you have? $"))
+                if self.money <= 4: print("You don't have enough money to play!")
+                else: break
+            except:
+                print("Incorrect money amount!")
+        
+        while True:
+            try:
+                self.bet = int(input("Place bet (MIN:$5): $"))
+                if self.bet <= 4: print("Incorrect betting amount!")
+                elif self.money < self.bet: print("You don't have that much money available to bet!")
+                else: break
+            except:
+                print("Incorrect betting amount!")
+        
+        self.money -= self.bet
 
-    def decide(self):
+    def strategy(self):
         # Getting self.choice
         if [card[:-1] for card in self.cards].count("A") == 1: # Soft totals
-            for i, row in enumerate(self.strategy["soft_totals_hand"]):
+            for i, row in enumerate(self.strategy_table["soft_totals_hand"]):
                 if get_points(self.cards) in row:
-                    self.choice = self.strategy["soft_totals"][i][get_points(dealer.cards[0])-2]
+                    self.choice = self.strategy_table["soft_totals"][i][get_points(dealer.cards[0])-2]
         else:        
-            for i, row in enumerate(self.strategy["pairs_hand"]): # Pairs
+            for i, row in enumerate(self.strategy_table["pairs_hand"]): # Pairs
                 if find_pair(self.cards) in row:
-                    self.choice = self.strategy["pairs"][i][get_points(dealer.cards[0])-2]
+                    self.choice = self.strategy_table["pairs"][i][get_points(dealer.cards[0])-2]
             
-            for i, row in enumerate(self.strategy["hard_totals_hand"]): # Hard totals
+            for i, row in enumerate(self.strategy_table["hard_totals_hand"]): # Hard totals
                 if get_points(self.cards) in row:
-                    self.choice = self.strategy["hard_totals"][i][get_points(dealer.cards[0])-2]
-
-        print(f"bot {self.num}: {self.choice}")
+                    self.choice = self.strategy_table["hard_totals"][i][get_points(dealer.cards[0])-2]
 
         if self.choice == "S":
-            self.stand()
+            print("[Strategy]: Stand")
         elif self.choice == "H":
-            self.hit()
+            print("[Strategy]: Hit")
         elif self.choice == "D":
-            self.double()
+            print("[Strategy]: Double down")
         elif self.choice == "SP":
-            self.split()
+            print("[Strategy]: Split")
 
-    def hit(self):
-        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        print(f"bot {self.num}(${self.bet}): hit!")
+    def decide(self):
+        while True:
+            self.decision = input("Would you like to [H]it, [S]tand, [D]ouble down or s[P]lit? ").lower()
+            if self.split_mode:
+                while True:
+                    try:
+                        print("Hand 1:" + " ".join(self.cards))
+                        self.hand = int(input("or hand 2:" + " ".join(self.cards_split) + "? "))-1
+                        if self.hand in [0, 1]:
+                            break
+                        else:
+                            print("Incorrect hand!")
+                    except ValueError:
+                        print("Incorrect hand!")
+            if self.decision == "h":
+                self.hit(self.hands[self.hand])
+                break
+            
+            elif self.decision == "s":
+                self.stand()
+                break
+            
+            elif self.decision == "d":
+                if self.money - self.bet*2 > 0:
+                    self.double(self.hands[self.hand])
+                    break
+                else:
+                    print("You don't have enough money to double!")
+
+            elif self.decision == "p":
+                if get_points(self.cards[0]) == get_points(self.cards[1]):
+                    if self.money - self.bet*2 > 0:
+                        self.split(self.hands[self.hand])
+                        break
+                    else:
+                        print("You don't have enough money to split!")
+                else:
+                    print("You can only split when your cards are of the same value!")
+
+            else:
+                print(f"Invalid choice, try again!")
+        
+    def hit(self, hand):
+        print(f"You hit!")
+        hand.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
+        print(f"Card obtained: {hand[-1]}")
+        print("Your cards:", *player.cards, f"| Points: {get_points(player.cards)} | Dealer: {dealer.cards[0]} ??\n") 
+        # TODO: show second hand if split
 
     def stand(self):
-        print(f"bot {self.num}(${self.bet}): stand!")
+        print(f"You stand!")
 
-    def double(self):
+    def double(self, hand):
         self.bet *= 2
-        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
-        print(f"bot {self.num}(${self.bet}): double down!")
+        hand.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
+        print(f"You double down!")
 
-    def split(self): # TODO
-        print(f"bot {self.num}: split!")
+    def split(self, hand): # TODO
+        self.bet *= 2
+        self.split_mode = True
+        self.cards_split.append(self.cards.pop[1])
+        self.cards_split.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
+        self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
+        print(f"You split!")
         pass
-    
+
     def state(self):
         if get_points(self.cards) > 21:
-            print(f"*** bot {self.num} busted! ***")
+            print("*** You busted! ***")
+            print(f"Balance     : ${self.money}")
+            print(f"You lost    : ${self.bet}")
             gameover()
 
-        elif get_points(self.cards) == 21 and get_points(dealer.cards) != 21: # Blackjack for self
-            print(f"*** bot {self.num} got blackjack! ***")
+        elif get_points(self.cards) == 21 and get_points(dealer.cards) != 21: # Blackjack for player
+            print("*** You got blackjack! ***")
+            self.money += self.bet*1.5
+            print(f"Reward      : ${round(self.bet*1.5, 2)}")
+            print(f"Balance     : ${self.money}")
             gameover()
 
         elif get_points(dealer.cards) == 21 and get_points(self.cards) != 21: # Blackjack for dealer
             print("*** The dealer has blackjack! ***")
-            print(f"You lost : ${self.bet}")
-            print(f"Balance  : ${self.money}")
+            print(f"You lost    : ${self.bet}")
+            print(f"Balance     : ${self.money}")
             gameover()
         
         elif get_points(dealer.cards) == get_points(self.cards) and get_points(self.cards) in range(17, 22): # Push
-            print(f"*** Push! (dealer and bot {self.num})***")
+            print("*** Push! ***")
+            print(f"Balance     : ${self.money}")
             gameover()
-        
-        else:
-            for bot in bots:
-                if get_points(bot.cards) == get_points(bots[self.num].cards) and get_points(bot.cards) == 21:
-                    print(f"*** Push! (bot {bot.num} and bot {self.num})***")
-            
-                elif get_points(bot.cards) == get_points(player.cards) and get_points(bot.cards) == 21:
-                        print(f"*** Push! (You and bot {self.num})***")
-        
-
-while True:
-    try:
-        bot_amount = int(input("How many bots do you want? (1-6): "))
-        if bot_amount not in range(1, 7): print("Incorrect bot amount!")
-        else: break
-    except:
-        print("Incorrect bot amount!")
-
-bots = [Bot(random.randint(5, 100), num) for num in range(1, bot_amount+1)] # Create bots
-
 
 
 class Dealer():
@@ -307,8 +242,6 @@ class Dealer():
     
     def deal(self):
         for _ in range(2):
-            for bot in bots:
-                bot.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
             player.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
             self.cards.append(cards.deck.pop(random.randint(0, len(cards.deck)-1)))
     
@@ -367,9 +300,9 @@ class Cards():
 
 
 def gameover():
-    for i, bot in enumerate(bots):
-        print(f"Bot {i}:       ", *bot.cards)
     print("Dealer cards:", *dealer.cards)
+    import sys
+    sys.exit(1)
 
 cards = Cards()
 cards.generate_deck()
@@ -378,18 +311,13 @@ player.place_bet()
 dealer = Dealer()
 dealer.deal()
 
-
-
 print("Cards dealt:", *player.cards, f"| Points: {get_points(player.cards)} | Dealer: {dealer.cards[0]} ??")
+if get_points(player.cards) == 21:
+    player.state()
 
-
+player.strategy()
 player.decide()
-for bot in bots:
-    # print("bot", bot.cards)
-    bot.decide()
 
 dealer.reveal()
 dealer.decide()
 player.state()
-for bot in bots:
-    bot.state()
